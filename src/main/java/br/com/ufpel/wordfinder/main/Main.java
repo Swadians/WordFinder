@@ -6,7 +6,9 @@
 package br.com.ufpel.wordfinder.main;
 
 import br.com.ufpel.wordfinder.base.Spark;
+import br.com.ufpel.wordfinder.util.IoUtil;
 import java.util.List;
+import scala.Tuple2;
 
 /**
  *
@@ -15,14 +17,16 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        List<String> linhas;
-
         try (Spark spark = new Spark()) {
-            linhas = spark.findLineByWordPDF("networks", "Entrada.pdf");
-        }
+            List<String> filesNames = IoUtil.getFilesNames("Entradas");
+            filesNames.parallelStream().forEach(file -> {
+                List<Tuple2<String, Integer>> local = spark.findWordsPDF(file, "networks", "momentum", 50);
 
-        linhas.forEach(linha -> System.out.println(linha));
-        System.out.println("###" + linhas.size());
+                System.out.println("Artigo: " + file);
+                local.forEach(linha -> System.out.println("Posição: " + linha._2));
+                System.out.println("Numero total de occorencias: " + local.size());
+            });
+        }
 
     }
 }

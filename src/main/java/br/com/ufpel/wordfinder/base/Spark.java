@@ -5,8 +5,9 @@
  */
 package br.com.ufpel.wordfinder.base;
 
-import br.com.ufpel.wordfinder.main.PDFUtil;
+import br.com.ufpel.wordfinder.util.PDFUtil;
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.spark.SparkConf;
@@ -23,6 +24,7 @@ import static org.apache.spark.sql.functions.col;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import scala.Tuple2;
 
 /**
  *
@@ -79,6 +81,63 @@ public class Spark implements Closeable {
         // Counts all the occurrences
         return lines.as(Encoders.STRING()).collectAsList();
 
+    }
+
+    public List<Tuple2<String, Integer>> findWords(String fileName, String wordA, String wordB, int maxDistance) {
+        // Creates a DataFrame having a single column named "line"
+        JavaRDD<Row> rowRDD = this.sparkContext.textFile(fileName)
+                .flatMap(s -> Arrays.asList(s.split(" ")).iterator())
+                .map(RowFactory::create);
+
+        List<StructField> fields = Arrays.asList(
+                DataTypes.createStructField("line", DataTypes.StringType, true));
+        StructType schema = DataTypes.createStructType(fields);
+
+        Dataset<Row> df = this.sparkSqlContext.createDataFrame(rowRDD, schema);
+
+        List<String> wordList = df.as(Encoders.STRING()).collectAsList();
+
+        List<Tuple2<String, Integer>> filtredWords = new ArrayList<>();
+        for (int i = 0; i < wordList.size(); i++) {
+            if (wordList.get(i).contains(wordA)) {
+                for (int j = 1; ((j <= maxDistance) && (j + i < wordList.size())); j++) {
+                    if (wordList.get(i + j).contains(wordB)) {
+                        filtredWords.add(new Tuple2<>(wordList.get(i + j), i + j));
+                    }
+                }
+            }
+        }
+
+        return filtredWords;
+    }
+
+    public List<Tuple2<String, Integer>> findWordsPDF(String fileName, String wordA, String wordB, int maxDistance) {
+        // Creates a DataFrame having a single column named "line"
+        JavaRDD<Row> rowRDD = this.sparkContext.binaryFiles(fileName)
+                .map(PDFUtil::ParseToRawText)
+                .flatMap(s -> Arrays.asList(s.split(" ")).iterator())
+                .map(RowFactory::create);
+
+        List<StructField> fields = Arrays.asList(
+                DataTypes.createStructField("line", DataTypes.StringType, true));
+        StructType schema = DataTypes.createStructType(fields);
+
+        Dataset<Row> df = this.sparkSqlContext.createDataFrame(rowRDD, schema);
+
+        List<String> wordList = df.as(Encoders.STRING()).collectAsList();
+
+        List<Tuple2<String, Integer>> filtredWords = new ArrayList<>();
+        for (int i = 0; i < wordList.size(); i++) {
+            if (wordList.get(i).contains(wordA)) {
+                for (int j = 1; ((j <= maxDistance) && (j + i < wordList.size())); j++) {
+                    if (wordList.get(i + j).contains(wordB)) {
+                        filtredWords.add(new Tuple2<>(wordList.get(i + j), i + j));
+                    }
+                }
+            }
+        }
+
+        return filtredWords;
     }
 
     @Override
