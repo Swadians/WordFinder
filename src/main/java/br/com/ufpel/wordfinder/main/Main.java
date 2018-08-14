@@ -18,10 +18,11 @@ public class Main {
         List<String> linhas;
 
         try (Spark spark = new Spark()) {
-            linhas = spark.findLineByWord("Palavra", "Entrada.txt");
+            linhas = spark.findLineByWordPDF("networks", "Entrada.pdf");
         }
 
         linhas.forEach(linha -> System.out.println(linha));
+        System.out.println("###" + linhas.size());
 
     }
 }

@@ -5,12 +5,15 @@
  */
 package br.com.ufpel.wordfinder.base;
 
+import br.com.ufpel.wordfinder.main.PDFUtil;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.input.PortableDataStream;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -46,7 +49,7 @@ public class Spark implements Closeable {
         this.sparkContext = new JavaSparkContext(conf);
     }
 
-    public List<String> findLineByWord(String word, String fileName) {
+    public List<String> findLineByWordText(String word, String fileName) {
         // Creates a DataFrame having a single column named "line"
         JavaRDD<String> textFile = this.sparkContext.textFile(fileName);
         JavaRDD<Row> rowRDD = textFile.map(RowFactory::create);
@@ -57,8 +60,25 @@ public class Spark implements Closeable {
         Dataset<Row> df = this.sparkSqlContext.createDataFrame(rowRDD, schema);
 
         Dataset<Row> lines = df.filter(col("line").like("%" + word + "%"));
-        // Counts all the errors
+        // Counts all the occurrences
         return lines.as(Encoders.STRING()).collectAsList();
+    }
+
+    public List<String> findLineByWordPDF(String word, String fileName) {
+        JavaPairRDD<String, PortableDataStream> rawFile = this.sparkContext.binaryFiles(fileName);
+
+        JavaRDD<String> textFile = rawFile.map(PDFUtil::ParseToRawText);
+        JavaRDD<Row> rowRDD = textFile.map(RowFactory::create);
+        List<StructField> fields = Arrays.asList(
+                DataTypes.createStructField("line", DataTypes.StringType, true));
+        StructType schema = DataTypes.createStructType(fields);
+
+        Dataset<Row> df = this.sparkSqlContext.createDataFrame(rowRDD, schema);
+
+        Dataset<Row> lines = df.filter(col("line").like("%" + word + "%"));
+        // Counts all the occurrences
+        return lines.as(Encoders.STRING()).collectAsList();
+
     }
 
     @Override
