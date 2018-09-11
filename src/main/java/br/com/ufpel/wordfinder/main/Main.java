@@ -7,7 +7,11 @@ package br.com.ufpel.wordfinder.main;
 
 import br.com.ufpel.wordfinder.base.Spark;
 import br.com.ufpel.wordfinder.util.IoUtil;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.List;
+import java.util.stream.Collectors;
 import scala.Tuple2;
 
 /**
@@ -16,15 +20,23 @@ import scala.Tuple2;
  */
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
         try (Spark spark = new Spark()) {
+            PrintStream ps = new PrintStream(new File("Relatorio"));
             List<String> filesNames = IoUtil.getFilesNames("Entradas");
-            filesNames.parallelStream().forEach(file -> {
-                List<Tuple2<String, Integer>> local = spark.findWordsPDF(file, "networks", "momentum", 50);
+            List<String> words = IoUtil.getWordsOfFile("words.txt");
 
-                System.out.println("Artigo: " + file);
-                local.forEach(linha -> System.out.println("Posição: " + linha._2));
-                System.out.println("Numero total de occorencias: " + local.size());
+            filesNames.parallelStream().forEach(file -> {
+                List<Tuple2<String, Integer>> local = spark.findPosOfWordsPDF(file, "networks", words, 50);
+
+                ps.println("Artigo: " + file);
+                local.forEach(linha -> ps.println("Palavra " + linha._1 + " Posicao: " + linha._2));
+                local.stream()
+                        .collect(Collectors.groupingBy(p -> p._1, Collectors.counting()))
+                        .forEach((palavra, num) -> {
+                            ps.println("Palavra " + palavra + " numero de ocorrencias: " + num);
+                        });
+
             });
         }
 
