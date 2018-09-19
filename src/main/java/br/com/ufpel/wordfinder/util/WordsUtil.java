@@ -23,7 +23,9 @@ public class WordsUtil {
         List<Tuple2<String, Integer>> filtredWords = new ArrayList<>();
         for (String wordTd : wordsToFind) {
             int count = (int) words.parallelStream().filter(word -> word.contains(wordTd)).count();
-            filtredWords.add(new Tuple2<>(wordTd, count));
+            if (count > 0) {
+                filtredWords.add(new Tuple2<>(wordTd, count));
+            }
         }
         return filtredWords;
     }
