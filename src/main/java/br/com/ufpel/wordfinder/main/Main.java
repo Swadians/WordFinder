@@ -67,6 +67,8 @@ public class Main {
                 ps.println("Palavra " + key + " citada em: " + wordGroup.get(key).size() + " artigos");
 
             });
+
+            ps.println();
         });
     }
 }
