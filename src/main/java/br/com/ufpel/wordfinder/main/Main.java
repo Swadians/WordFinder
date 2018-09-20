@@ -5,8 +5,8 @@
  */
 package br.com.ufpel.wordfinder.main;
 
-import br.com.ufpel.wordfinder.base.Spark;
 import br.com.ufpel.wordfinder.base.ArticleFile;
+import br.com.ufpel.wordfinder.base.Spark;
 import br.com.ufpel.wordfinder.util.IoUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -40,20 +40,33 @@ public class Main {
             });
         }
 
-        // ------------------------------#LOG#----------------------------------
+        //-------------------------------#LOG#----------------------------------
         PrintStream ps = new PrintStream(new File("Relatorio"));
 
-        List<ArticleFile> files = buffer.keySet().stream().collect(Collectors.toList());
-        Collections.sort(files);
+        Map<String, List<List<Tuple2<String, Integer>>>> articlesGroup = buffer.entrySet().stream().collect(Collectors.groupingBy(
+                data -> data.getKey().folder, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
-        files.forEach(file -> {
-            ps.println("Artigo: " + file.fileName);
-            buffer.get(file)
-                    .forEach((tupla) -> {
-                        ps.println("Palavra " + tupla._1 + " numero de ocorrencias: " + tupla._2);
-                    });
-            ps.println();
+        System.out.println("");
+        List<String> folders = articlesGroup.keySet().stream().collect(Collectors.toList());
+        Collections.sort(folders);
+
+        folders.forEach(folder -> {
+            ps.println("Pasta: " + folder);
+
+            Map<String, List<Tuple2<String, Integer>>> wordGroup = articlesGroup.get(folder).stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList())
+                    .stream().collect(
+                            Collectors.groupingBy(Tuple2::_1)
+                    );
+
+            wordGroup.keySet().forEach(key -> {
+
+                int sum = wordGroup.get(key).stream().mapToInt(data -> data._2).sum();
+                ps.println("Palavra " + key + " numero de ocorrencias: " + sum);
+                ps.println("Palavra " + key + " citada em: " + wordGroup.get(key).size() + " artigos");
+
+            });
         });
-
     }
 }
