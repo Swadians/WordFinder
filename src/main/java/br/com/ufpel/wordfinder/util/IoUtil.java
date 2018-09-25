@@ -44,10 +44,10 @@ public class IoUtil {
 
             while (sc.hasNext()) {
                 buffer.append(sc.nextLine())
-                        .append(" ");
+                        .append("\n");
             }
 
-            String[] palavras = buffer.toString().split(" ");
+            String[] palavras = buffer.toString().split("\n");
 
             return Arrays.asList(palavras);
         } catch (IOException ex) {

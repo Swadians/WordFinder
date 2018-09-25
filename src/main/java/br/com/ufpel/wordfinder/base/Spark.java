@@ -70,10 +70,16 @@ public class Spark implements Closeable {
         return WordsUtil.wordCount(wordList, regex);
     }
 
-    public List<Tuple2<String, Integer>> findNumberOfWordOccurrenceInPDF(String fileName, List<String> words) {
+    public List<Tuple2<String, Integer>> findNumberOfWordOccurrenceContainsInPDF(String fileName, List<String> words) {
         List<String> wordList = getWordListOfPDF(fileName);
 
-        return WordsUtil.wordCount(wordList, words);
+        return WordsUtil.countWordsContais(wordList, words);
+    }
+
+    public List<Tuple2<String, Integer>> findNumberOfWordOccurrenceInPDF(String fileName, List<String> regexs) {
+        List<String> wordList = getWordListOfPDF(fileName);
+
+        return WordsUtil.countWords(wordList, regexs);
     }
 
     public List<Tuple2<String, Integer>> findPosOfWordsPDF(String fileName, String wordA, List<String> wordsB, int maxDistance) {

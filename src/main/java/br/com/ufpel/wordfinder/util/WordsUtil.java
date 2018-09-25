@@ -19,10 +19,21 @@ public class WordsUtil {
         return words.parallelStream().filter(word -> word.matches(regex)).count();
     }
 
-    public static List<Tuple2<String, Integer>> wordCount(List<String> words, List<String> wordsToFind) {
+    public static List<Tuple2<String, Integer>> countWordsContais(List<String> words, List<String> wordsToFind) {
         List<Tuple2<String, Integer>> filtredWords = new ArrayList<>();
         for (String wordTd : wordsToFind) {
             int count = (int) words.parallelStream().filter(word -> word.contains(wordTd)).count();
+            if (count > 0) {
+                filtredWords.add(new Tuple2<>(wordTd, count));
+            }
+        }
+        return filtredWords;
+    }
+
+    public static List<Tuple2<String, Integer>> countWords(List<String> words, List<String> regexs) {
+        List<Tuple2<String, Integer>> filtredWords = new ArrayList<>();
+        for (String wordTd : regexs) {
+            int count = (int) words.parallelStream().filter(word -> word.matches(wordTd)).count();
             if (count > 0) {
                 filtredWords.add(new Tuple2<>(wordTd, count));
             }
